@@ -12,19 +12,13 @@ opencv-python == 4.5.1.48
 # Data Preparation
 The structure of the training data is shown below:
 
-├── Hybrid/
-
-│   ├── Degraded/
-
-│   │   ├── Blur/
-
-│   │   ├── Noise/
-
-│   │   ├── Shadow/
-
-│   │   ├── Watermark/
-
-│   │   ├── WithBack/
+Hybrid/
+└── Degraded/
+    ├── Blur/
+    ├── Noise/
+    ├── Shadow/
+    ├── Watermark/
+    └── WithBack/
 
 You should download [background texures and shadow masks](https://1drv.ms/f/c/19d8e82d48ee973e/EvYcSa6uHV9HipaNI17YUo0B61GS1DnKJluMJICb8vmyLQ?e=1yQf9s) first. 
 
