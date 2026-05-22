@@ -29,7 +29,7 @@ datasets:
   val:
     name: UEN
     mode: UEN_test
-    filelist: /home/test.txt # Change it to your path. The image paths used for testing should be stored in this file.
+    filelist: ./path.txt # Each line: degraded_image_path|gt_image_path
     batch_size: 1 # Do not change
     use_shuffle: false
 
@@ -59,7 +59,7 @@ train:
   # niter: 1200000
   niter: 1
   ewc: false
-  distill: true
+  distill: false
   ewc_coff: 50.0
   distill_coff: 0.2
   fix_some_part: ~

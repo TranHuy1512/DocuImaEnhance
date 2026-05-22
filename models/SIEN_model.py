@@ -271,10 +271,9 @@ class SIEN_Model(BaseModel):
             for l in range(test_image_p.shape[0]):
                 #print("patch shape:",np.transpose(test_image_p[l], [2,0,1]).shape)
                 tmp = np.transpose(test_image_p[l], [2,0,1])
-                tmp = torch.from_numpy(tmp).reshape(1,3,256,256).float()
+                tmp = torch.from_numpy(tmp).reshape(1,3,256,256).float().to(self.device)
                 #print(tmp.shape)
-                self.netG(tmp)
-                
+
                 # for torch : 1.7.1
                 predict = self.netG(tmp)[0].squeeze().permute((1,2,0)).cpu().numpy()
                 # else :
@@ -334,10 +333,9 @@ class SIEN_Model(BaseModel):
             for l in range(test_image_p.shape[0]):
                 #print("patch shape:",np.transpose(test_image_p[l], [2,0,1]).shape)
                 tmp = np.transpose(test_image_p[l], [2,0,1])
-                tmp = torch.from_numpy(tmp).reshape(1,3,256,256).float()
+                tmp = torch.from_numpy(tmp).reshape(1,3,256,256).float().to(self.device)
                 #print(tmp.shape)
-                self.netG(tmp)
-                
+
                 # for torch : 1.7.1
                 predict = self.netG(tmp)[0].squeeze().permute((1,2,0)).cpu().numpy()
                 # else :
@@ -450,4 +448,3 @@ class SIEN_Model(BaseModel):
 
     def save_best(self,name):
         self.save_network(self.netG, 'best'+name, 0)
-

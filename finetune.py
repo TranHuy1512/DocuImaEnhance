@@ -216,8 +216,8 @@ def main():
                 # 20221124
                 # save some validation patches
                 print(en_img)
-                util.custom_save_img('/home/wrl/DocNLC/output/experiments/STEN/val_images/',en_img,epoch,'restore',idx)
-                util.custom_save_img('/home/wrl/DocNLC/output/experiments/STEN/val_images/',gt_img,epoch,'gt',idx)
+                util.custom_save_img(opt['path']['val_images'], en_img, epoch, 'restore', idx)
+                util.custom_save_img(opt['path']['val_images'], gt_img, epoch, 'gt', idx)
                 ############################
 
                 # Save SR images for reference

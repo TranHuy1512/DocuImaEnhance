@@ -535,7 +535,8 @@ class multitask_Barlow_model(BaseModel):
         self.optimizer_G.step()
         self.fake_H = out
         #print('out&gt min&max:',torch.max(self.fake_H), torch.max(self.real_H))
-        psnr = psnr_np(self.fake_H.detach(), self.real_H.detach())
+        # psnr = psnr_np(self.fake_H.detach(), self.real_H.detach())
+        psnr = psnr_np(torch.sigmoid(self.fake_H.detach()), self.real_H.detach())
         #print('psnr:',psnr, psnr_np(self.fake_H.detach()*255, self.real_H.detach()*255))
 
         # set log

@@ -222,8 +222,8 @@ def main():
                 # 20221124
                 # save some validation patches
                 print(en_img)
-                util.custom_save_img('/home/wrl/DocNLC/output/experiments/'+opt['name']+'/val_images/',en_img,epoch,'restore',idx)
-                util.custom_save_img('/home/wrl/DocNLC/output/experiments/'+opt['name']+'/val_images/',gt_img,epoch,'gt',idx)
+                util.custom_save_img(opt['path']['val_images'], en_img, epoch, 'restore', idx)
+                util.custom_save_img(opt['path']['val_images'], gt_img, epoch, 'gt', idx)
 
                 # calculate PSNR
                 psnr_inst = util.calculate_psnr(np.where(en_img>255, 255, en_img), gt_img)

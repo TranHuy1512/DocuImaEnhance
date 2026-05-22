@@ -1,0 +1,155 @@
+26-05-22 13:57:50.680 - INFO:   name: BarlowNew_notebook
+  use_tb_logger: True
+  model: Barlow
+  distortion: sr
+  scale: 1
+  gpu_ids: [0]
+  datasets:[
+    train:[
+      name: UEN
+      mode: multi_task
+      interval_list: [1]
+      random_reverse: False
+      border_mode: False
+      cache_keys: None
+      filelist: /workspace/project/DocuImaEnhance/pretraining_data_path.txt
+      use_shuffle: True
+      n_workers: 0
+      batch_size: 32
+      IN_size: 256
+      augment: True
+      color: RGB
+      phase: train
+      scale: 1
+      data_type: img
+    ]
+  ]
+  network_G:[
+    which_model_G: multi
+    nf: 16
+    groups: 8
+    scale: 1
+  ]
+  path:[
+    root: /workspace/project/DocuImaEnhance/output
+    results_root: /workspace/project/DocuImaEnhance/output
+    pretrain: /workspace/project/DocuImaEnhance/pretrain1
+    pretrain_model_G: /workspace/project/DocuImaEnhance/ckpts/symmetric_47_G.pth
+    strict_load: False
+    resume_state: None
+    experiments_root: /workspace/project/DocuImaEnhance/output/experiments/BarlowNew_notebook
+    models: /workspace/project/DocuImaEnhance/output/experiments/BarlowNew_notebook/models
+    training_state: /workspace/project/DocuImaEnhance/output/experiments/BarlowNew_notebook/training_state
+    log: /workspace/project/DocuImaEnhance/output/experiments/BarlowNew_notebook
+    val_images: /workspace/project/DocuImaEnhance/output/experiments/BarlowNew_notebook/val_images
+  ]
+  train:[
+    lr_G: 0.0001
+    lr_scheme: MultiStepLR
+    beta1: 0.9
+    beta2: 0.99
+    niter: 17250
+    ewc: False
+    distill: True
+    ewc_coff: 50.0
+    distill_coff: 0.2
+    fix_some_part: None
+    warmup_iter: -1
+    ComputeImportance: False
+    istraining: True
+    lr_steps: [60, 90]
+    lr_gamma: 0.5
+    eta_min: 5e-06
+    pixel_criterion: binary
+    pixel_weight: 5000.0
+    ssim_weight: 1000.0
+    vgg_weight: 1000.0
+    val_epoch: 1
+    manual_seed: 0
+    loss_form: sym
+  ]
+  logger:[
+    print_freq: 40
+    save_checkpoint_epoch: 1
+  ]
+  is_train: True
+  dist: False
+
+26-05-22 13:57:50.726 - INFO: Random seed: 0
+26-05-22 13:57:50.750 - INFO: Dataset [DatasetFromFolder - UEN] is created.
+26-05-22 13:57:50.751 - INFO: Number of train images: 11,037, iters: 345
+26-05-22 13:57:50.751 - INFO: Total epochs needed: 50 for iters 17,250
+26-05-22 13:57:51.027 - INFO: Network G structure: DataParallel - SeeInDark, with parameters: 7,816,883
+26-05-22 13:57:51.027 - INFO: SeeInDark(
+  (conv1_1): AttING(
+    (conv1): Conv2d(3, 32, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (conv2_1): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (conv2_2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (instance): InstanceNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=False)
+    (interative): Sequential(
+      (0): Conv2d(64, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+      (1): LeakyReLU(negative_slope=0.1)
+      (2): Sigmoid()
+    )
+    (act): LeakyReLU(negative_slope=0.1)
+    (avgpool): AdaptiveAvgPool2d(output_size=1)
+    (process): Sequential(
+      (0): Conv2d(64, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (1): LeakyReLU(negative_slope=0.1)
+      (2): Conv2d(16, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+      (3): Sigmoid()
+    )
+    (conv1x1): Conv2d(64, 32, kernel_size=(1, 1), stride=(1, 1))
+  )
+  (conv1_2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (pool1): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  (conv2_1): Conv2d(32, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (conv2_2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (pool2): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  (conv3_1): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (conv3_2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (pool3): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  (conv4_1): Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (conv4_2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (pool4): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+  (conv5_1): Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (conv5_2): Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (upv6): ConvTranspose2d(512, 256, kernel_size=(2, 2), stride=(2, 2))
+  (conv6_1): Conv2d(512, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (conv6_2): Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (upv7): ConvTranspose2d(256, 128, kernel_size=(2, 2), stride=(2, 2))
+  (conv7_1): Conv2d(256, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (conv7_2): Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (upv8): ConvTranspose2d(128, 64, kernel_size=(2, 2), stride=(2, 2))
+  (conv8_1): Conv2d(128, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (conv8_2): Conv2d(64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (upv9): ConvTranspose2d(64, 32, kernel_size=(2, 2), stride=(2, 2))
+  (conv9_1): Conv2d(64, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (conv9_2): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+  (conv10_1): Conv2d(32, 3, kernel_size=(1, 1), stride=(1, 1))
+)
+26-05-22 13:57:51.027 - INFO: Loading model for G [/workspace/project/DocuImaEnhance/ckpts/symmetric_47_G.pth] ...
+26-05-22 13:57:51.058 - INFO: Initial Importance and Stars with zeros!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+26-05-22 13:57:51.092 - INFO: Loading model for WarmUp G [/workspace/project/DocuImaEnhance/ckpts/symmetric_47_G.pth] ...
+26-05-22 13:57:51.110 - INFO: Model [multitask_Barlow_model] is created.
+26-05-22 13:57:51.110 - INFO: Start training from epoch: 0, iter: 0
+26-05-22 14:00:06.733 - INFO: [epoch:  0, iter:      40, lr:(1.000e-04,)] mean_total_loss: 2.6598e+00 mesn_psnr: -10.0592679977417 
+26-05-22 14:02:13.030 - INFO: [epoch:  0, iter:      80, lr:(5.000e-05,)] mean_total_loss: 2.6399e+00 mesn_psnr: -9.824917316436768 
+26-05-22 14:04:21.929 - INFO: [epoch:  0, iter:     120, lr:(2.500e-05,)] mean_total_loss: 2.5958e+00 mesn_psnr: -10.025906562805176 
+26-05-22 14:06:23.132 - INFO: [epoch:  0, iter:     160, lr:(2.500e-05,)] mean_total_loss: 2.6271e+00 mesn_psnr: -9.94118618965149 
+26-05-22 14:08:22.038 - INFO: [epoch:  0, iter:     200, lr:(2.500e-05,)] mean_total_loss: 2.6193e+00 mesn_psnr: -10.05123462677002 
+26-05-22 14:10:24.622 - INFO: [epoch:  0, iter:     240, lr:(2.500e-05,)] mean_total_loss: 2.6262e+00 mesn_psnr: -9.979424635569254 
+26-05-22 14:12:31.224 - INFO: [epoch:  0, iter:     280, lr:(2.500e-05,)] mean_total_loss: 2.6331e+00 mesn_psnr: -10.017356191362653 
+26-05-22 14:14:36.430 - INFO: [epoch:  0, iter:     320, lr:(2.500e-05,)] mean_total_loss: 2.6281e+00 mesn_psnr: -10.075572848320007 
+26-05-22 14:15:59.564 - INFO: Saving models and training states.
+26-05-22 14:16:44.834 - INFO: [epoch:  1, iter:     360, lr:(2.500e-05,)] mean_total_loss: 2.6178e+00 mesn_psnr: -9.821065902709961 
+26-05-22 14:18:40.236 - INFO: [epoch:  1, iter:     400, lr:(2.500e-05,)] mean_total_loss: 2.5915e+00 mesn_psnr: -10.13953685760498 
+26-05-22 14:20:35.232 - INFO: [epoch:  1, iter:     440, lr:(2.500e-05,)] mean_total_loss: 2.5581e+00 mesn_psnr: -10.216065406799316 
+26-05-22 14:22:31.632 - INFO: [epoch:  1, iter:     480, lr:(2.500e-05,)] mean_total_loss: 2.6092e+00 mesn_psnr: -10.245693922042847 
+26-05-22 14:24:30.726 - INFO: [epoch:  1, iter:     520, lr:(2.500e-05,)] mean_total_loss: 2.6400e+00 mesn_psnr: -10.017545127868653 
+26-05-22 14:26:27.527 - INFO: [epoch:  1, iter:     560, lr:(2.500e-05,)] mean_total_loss: 2.6463e+00 mesn_psnr: -10.064157644907633 
+26-05-22 14:28:22.227 - INFO: [epoch:  1, iter:     600, lr:(2.500e-05,)] mean_total_loss: 2.6720e+00 mesn_psnr: -9.91157327379499 
+26-05-22 14:30:18.924 - INFO: [epoch:  1, iter:     640, lr:(2.500e-05,)] mean_total_loss: 2.6526e+00 mesn_psnr: -9.883135557174683 
+26-05-22 14:32:19.029 - INFO: [epoch:  1, iter:     680, lr:(2.500e-05,)] mean_total_loss: 2.6471e+00 mesn_psnr: -9.967420048183865 
+26-05-22 14:32:46.346 - INFO: Saving models and training states.
+26-05-22 14:34:11.436 - INFO: [epoch:  2, iter:     720, lr:(2.500e-05,)] mean_total_loss: 2.5533e+00 mesn_psnr: -10.265583038330078 
