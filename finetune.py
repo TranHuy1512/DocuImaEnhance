@@ -130,10 +130,22 @@ def main():
         start_epoch = 0
 
 
-    best_psnr_avg = 0
+    best_psnr_avg = -float('inf')
     best_step_avg = 0
+    early_stopping_patience = opt['train']['early_stopping_patience']
+    save_best_only = bool(opt['train']['save_best_only'])
+    if early_stopping_patience is not None:
+        early_stopping_patience = int(early_stopping_patience)
+        if early_stopping_patience <= 0:
+            raise ValueError('early_stopping_patience must be greater than zero.')
+        if not opt['datasets'].get('val', None):
+            raise ValueError('Validation data is required when early stopping is enabled.')
+    validations_without_improvement = 0
+    stop_training = False
     #### training
     logger.info('Start training from epoch: {:d}, iter: {:d}'.format(start_epoch, current_step))
+    if early_stopping_patience is not None:
+        logger.info('Early stopping patience: {:d} validation epochs.'.format(early_stopping_patience))
 
     for epoch in range(start_epoch, total_epochs + 2):
     #
@@ -191,7 +203,8 @@ def main():
             for batch_step, train_data in enumerate(train_loader):
                 model.feed_data(train_data)
                 model.compute_M(batch_step)
-            model.save_M(str(epoch))
+            if not save_best_only:
+                model.save_M(str(epoch))
         
             ##### valid test
         if opt['datasets'].get('val', None) and epoch % opt['train']['val_epoch'] == 0:
@@ -202,7 +215,6 @@ def main():
 
             for val_data in val_loader:
                 idx += 1
-                img_name = val_data['LQ_path'][0]
                 model.feed_val_data(val_data)
 
                 model.val()
@@ -211,21 +223,9 @@ def main():
                 # en_img = util.tensor2img(visuals['rlt'])  # uint8
                 en_img = visuals['rlt']
                 gt_img = util.tensor2img(visuals['GT'])  # uint8
-
-                ############################
-                # 20221124
-                # save some validation patches
-                print(en_img)
-                util.custom_save_img(opt['path']['val_images'], en_img, epoch, 'restore', idx)
-                util.custom_save_img(opt['path']['val_images'], gt_img, epoch, 'gt', idx)
-                ############################
-
-                # Save SR images for reference
-                # if current_step % opt['logger']['save_checkpoint_freq'] == 0:
-                #     save_img_path = os.path.join(img_dir,
-                #                                  '{:s}_{:d}.png'.format(img_name, current_step))
-                #
-                #     util.save_img(en_img, save_img_path)
+                if not save_best_only:
+                    util.custom_save_img(opt['path']['val_images'], en_img, epoch, 'restore', idx)
+                    util.custom_save_img(opt['path']['val_images'], gt_img, epoch, 'gt', idx)
 
                 # calculate PSNR
                 psnr_inst = util.calculate_psnr(en_img, gt_img)
@@ -237,12 +237,16 @@ def main():
                 if idx % 100 == 0:
                     print("Test the {} the image".format(idx))
 
+            if idx == 0:
+                raise RuntimeError('Validation produced no valid PSNR values.')
+            avg_psnr = avg_psnr_all / idx
+
             # log
             logger.info('# Epoch : {:d}'.format(epoch))
-            logger.info('# Validation # PSNR: {:.4e}, '.format(avg_psnr_all / idx))
+            logger.info('# Validation # PSNR: {:.4e}, '.format(avg_psnr))
             logger.info(
                 '# Validation # Average PSNR: {:.4e} Previous best Average PSNR: {:.4e} Previous best Average step: {}'.
-                format(avg_psnr_all / idx, best_psnr_avg, best_step_avg))
+                format(avg_psnr, best_psnr_avg, best_step_avg))
             # tensorboard logger
             # if opt['use_tb_logger'] and 'debug' not in opt['name']:
             #     tb_logger.add_scalar('valid_psnr_low', avg_psnr_low, current_step)
@@ -251,29 +255,52 @@ def main():
             # model.save_M('low')
             # logger.info('Saving Important parameters!!!!!!')
 
-            if avg_psnr_all / idx > best_psnr_avg:
+            if avg_psnr > best_psnr_avg:
                 if rank <= 0:
-                    best_psnr_avg = avg_psnr_all / idx
+                    best_psnr_avg = avg_psnr
                     best_step_avg = current_step
-                    logger.info('Saving best average models!!!!!!!The best psnr is:{:4e}'.format(best_psnr_avg))
+                    validations_without_improvement = 0
+                    logger.info('Saving best model. Best PSNR: {:4e}'.format(best_psnr_avg))
                     model.save_best('avg')
-                    #
-                    # model.save_M('avg')
-                    # logger.info('Saving Important parameters!!!!!!')
+                    if save_best_only and opt['train']['ComputeImportance'] == True:
+                        model.save_M('bestavg')
+                    if save_best_only:
+                        # Run output export only for a new best to avoid retaining a full validation set in RAM.
+                        for image_idx, val_data in enumerate(val_loader, 1):
+                            model.feed_val_data(val_data)
+                            model.val()
+                            visuals = model.get_val_current_visuals()
+                            en_img = visuals['rlt']
+                            gt_img = util.tensor2img(visuals['GT'])
+                            util.custom_save_img(opt['path']['val_images'], en_img, 'best', 'restore', image_idx)
+                            util.custom_save_img(opt['path']['val_images'], gt_img, 'best', 'gt', image_idx)
+            else:
+                validations_without_improvement += 1
+                logger.info('No validation improvement for {:d} consecutive epoch(s).'.format(
+                    validations_without_improvement))
+                if (early_stopping_patience is not None and
+                        validations_without_improvement >= early_stopping_patience):
+                    logger.info('Early stopping at epoch {:d}: no validation improvement for {:d} consecutive epochs.'.
+                                format(epoch, early_stopping_patience))
+                    stop_training = True
 
-            #### save models and training states
-        #if epoch % opt['logger']['save_checkpoint_epoch'] == 0 and epoch >= 40:
-        if epoch % opt['logger']['save_checkpoint_epoch'] == 0 and epoch >= 100:
+        if not save_best_only and epoch % opt['logger']['save_checkpoint_epoch'] == 0 and epoch >= 100:
             if rank <= 0:
                 logger.info('Saving models and training states.')
                 model.save(epoch)
-                # model.save_M(str(epoch))
                 model.save_training_state(epoch, current_step)
 
+        if stop_training or current_step >= total_iters:
+            break
+
     if rank <= 0:
-        logger.info('Saving the final model.')
-        model.save('latest')
-        logger.info('End of training.')
+        if save_best_only:
+            logger.info('End of training. Best validation PSNR: {:.4e} at iter: {}.'.format(
+                best_psnr_avg, best_step_avg))
+        else:
+            logger.info('Saving the final model.')
+            model.save('latest')
+            logger.info('End of training.')
         # tb_logger.close()
 
 if __name__ == '__main__':

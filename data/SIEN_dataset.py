@@ -23,7 +23,16 @@ def get_patch(input, target, patch_size, scale = 1, ix=-1, iy=-1):
     #     input = np.pad(input, ((0,384-ih)), 'edge')
     # elif(iw<384):
     #     input = np.pad(input, ((1,384-iw)), 'edge')
-    ih, iw, channels = input.shape    
+    ih, iw, channels = input.shape
+    th, tw = target.shape[:2]
+    if ih < patch_size or iw < patch_size:
+        raise ValueError(
+            f"Input image is smaller than patch_size={patch_size}: input shape={input.shape}"
+        )
+    if th < patch_size or tw < patch_size:
+        raise ValueError(
+            f"Target image is smaller than patch_size={patch_size}: target shape={target.shape}"
+        )
 
     # (th, tw) = (scale * ih, scale * iw)
 
@@ -77,7 +86,10 @@ def augment(inputs, target, hflip, rot):
 
 def get_image_ldr(img):
     print('path:',img)
-    img = cv2.imread(img,cv2.IMREAD_UNCHANGED).astype(np.float32)/255.0
+    image = cv2.imread(img,cv2.IMREAD_UNCHANGED)
+    if image is None:
+        raise FileNotFoundError(f"Cannot read image with OpenCV: {img}")
+    img = image.astype(np.float32)/255.0
     print(np.max(img), np.min(img))
     # if img.shape[1]*img.shape[2] >= 800*800:
     #     img = cv2.resize(img,(img.shape[1]//2,img.shape[0]//2))
@@ -89,10 +101,10 @@ def get_image_ldr(img):
     if(len(img.shape)<3):
         img = np.expand_dims(img, 2).repeat(3, axis = 2)
     if(h<384):
-        cv2.resize(img, (384, w))
+        img = cv2.resize(img, (384, w))
         h = 384
     if(w<384):
-        cv2.resize(img, (h,384))
+        img = cv2.resize(img, (h,384))
         w = 384
     ########################################
     while w%4!=0:
@@ -110,6 +122,8 @@ def load_image_train2(group):
     # target = images[-1]
     inputs = get_image_ldr(group[0])
     target = get_image_ldr(group[1])
+    if inputs.shape[:2] != target.shape[:2]:
+        target = cv2.resize(target, (inputs.shape[1], inputs.shape[0]))
     # if black_edges_crop == True:
     #     inputs = [indiInput[70:470, :, :] for indiInput in inputs]
     #     target = target[280:1880, :, :]

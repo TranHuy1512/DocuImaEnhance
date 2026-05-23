@@ -18,6 +18,21 @@ from models import create_model
 
 import cv2
 
+def load_gt_for_metrics(gt_path, lq_path, output_shape):
+    gt_img = cv2.imread(gt_path, cv2.IMREAD_COLOR)
+    lq_img = cv2.imread(lq_path, cv2.IMREAD_COLOR)
+    if gt_img is None:
+        raise FileNotFoundError('Cannot read GT image: {}'.format(gt_path))
+    if lq_img is None:
+        raise FileNotFoundError('Cannot read degraded image: {}'.format(lq_path))
+    if gt_img.shape != lq_img.shape:
+        raise ValueError('Paired source images have different shapes: LQ={}, GT={}'.format(
+            lq_img.shape, gt_img.shape))
+    if gt_img.shape != output_shape:
+        gt_img = cv2.resize(gt_img, (output_shape[1], output_shape[0]))
+    return gt_img
+
+
 def main():
     #### options
     parser = argparse.ArgumentParser()
@@ -80,12 +95,13 @@ def main():
     logger.info('Start evaluation.')
     for idx, val_data in enumerate(val_loader, 1):
         img_name = val_data['LQ_path'][0]
+        gt_name = val_data['GT_path'][0]
         model.feed_data(val_data)
         model.test()
 
         visuals = model.get_current_visuals()
         en_img = np.clip(visuals['rlt'], 0, 255).astype(np.uint8)
-        gt_img = util.tensor2img(visuals['GT'])  # uint8
+        gt_img = load_gt_for_metrics(gt_name, img_name, en_img.shape)
 
         real_name = os.path.basename(img_name)
         cv2.imwrite(os.path.join(test_img_dir, real_name), en_img)
