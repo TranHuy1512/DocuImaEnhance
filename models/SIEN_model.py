@@ -23,6 +23,19 @@ import cv2
 logger = logging.getLogger('base')
 
 
+def read_degraded_image(path):
+    image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+    if image is None:
+        raise FileNotFoundError('Cannot read degraded image: {}'.format(path))
+    if image.ndim == 2:
+        image = np.expand_dims(image, axis=2).repeat(3, axis=2)
+    elif image.ndim == 3 and image.shape[2] == 4:
+        image = image[:, :, :3]
+    elif image.ndim != 3 or image.shape[2] != 3:
+        raise ValueError('Unsupported degraded image shape {}: {}'.format(image.shape, path))
+    return np.array(image) / 255
+
+
 class SIEN_Model(BaseModel):
     def __init__(self, opt):
         super(SIEN_Model, self).__init__(opt)
@@ -240,7 +253,7 @@ class SIEN_Model(BaseModel):
         with torch.no_grad():
             # deg_image = self.var_L# /255.0
             
-            deg_image = np.array(cv2.imread(self.de_path[0],cv2.IMREAD_UNCHANGED))/255
+            deg_image = read_degraded_image(self.de_path[0])
             print('read:',np.max(deg_image), np.min(deg_image))
             h,w,_ = deg_image.shape
             if(h<384):
@@ -302,7 +315,7 @@ class SIEN_Model(BaseModel):
         with torch.no_grad():
             # deg_image = self.var_L# /255.0
             
-            deg_image = np.array(cv2.imread(self.de_path[0],cv2.IMREAD_UNCHANGED))/255
+            deg_image = read_degraded_image(self.de_path[0])
             print('read:',np.max(deg_image), np.min(deg_image))
             h,w,_ = deg_image.shape
             if(h<384):
